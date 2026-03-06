@@ -34,6 +34,11 @@ def load_local_env_once():
 load_local_env_once()
 
 
+def make_geolocator():
+    user_agent = os.getenv('GEOCODER_USER_AGENT', 'vapt-vupt-geocoder')
+    return Nominatim(user_agent=user_agent, timeout=10)
+
+
 def try_parse_lat_lng(value):
     if not isinstance(value, str):
         return None
@@ -54,17 +59,38 @@ def try_parse_lat_lng(value):
     return lat, lng
 
 
+def extract_cep_from_text(value):
+    if not isinstance(value, str):
+        return None
+
+    match = re.search(r'(\d{5})-?(\d{3})', value)
+    if not match:
+        return None
+
+    return f"{match.group(1)}{match.group(2)}"
+
+
+def build_geocode_query_candidates(raw_value):
+    cleaned = sanitize_address_for_geocode(raw_value)
+    cep_from_text = extract_cep_from_text(cleaned)
+
+    candidates = [cleaned]
+    if cleaned:
+        candidates.append(f"{cleaned}, Brasil")
+
+    if cep_from_text:
+        candidates.append(f"{cep_from_text}, Brasil")
+        candidates.append({"postalcode": cep_from_text, "country": "Brasil"})
+
+    return [candidate for candidate in candidates if candidate]
+
+
 def resolve_coordinates(raw_value, geolocator, field_name):
     parsed = try_parse_lat_lng(raw_value)
     if parsed is not None:
         return parsed
 
-    # Tenta variacoes do endereco para reduzir ambiguidades comuns.
-    candidates = [
-        raw_value,
-        f"{raw_value}, Sao Paulo, SP, Brasil",
-        f"{raw_value}, Brasil",
-    ]
+    candidates = build_geocode_query_candidates(raw_value)
 
     seen = set()
     for query in candidates:
@@ -79,7 +105,6 @@ def resolve_coordinates(raw_value, geolocator, field_name):
                 country_codes='br',
                 exactly_one=True,
                 addressdetails=False,
-                timeout=10,
             )
         except Exception:
             location = None
@@ -117,9 +142,9 @@ def geocode_candidates(geolocator, candidates, ref_lat=None, ref_lng=None):
 
         try:
             if isinstance(candidate, dict):
-                locations = geolocator.geocode(candidate, exactly_one=False, limit=5, addressdetails=False, timeout=10)
+                locations = geolocator.geocode(candidate, country_codes='br', exactly_one=False, limit=5, addressdetails=False)
             else:
-                locations = geolocator.geocode(candidate, country_codes='br', exactly_one=False, limit=5, addressdetails=False, timeout=10)
+                locations = geolocator.geocode(candidate, country_codes='br', exactly_one=False, limit=5, addressdetails=False)
         except Exception:
             locations = None
 
@@ -455,7 +480,7 @@ def geocode_address():
     if cidade_uf and cidade_uf.lower() not in endereco_consulta.lower():
         endereco_consulta = f"{endereco_consulta}, {cidade_uf}, Brasil"
 
-    geolocator = Nominatim(user_agent="geoapiSparqs")
+    geolocator = make_geolocator()
     street = f"{logradouro}, {numero}" if logradouro and numero else logradouro
     structured_query = {
         "street": street,
@@ -471,6 +496,17 @@ def geocode_address():
         candidates.append(structured_query)
 
     candidates.append(endereco_consulta)
+    candidates.append(f"{endereco_consulta}, Brasil")
+
+    cep_from_text = extract_cep_from_text(endereco_consulta)
+    cep_fallback = cep_normalized or cep_from_text
+    if cep_fallback:
+        candidates.append(f"{cep_fallback}, Brasil")
+        candidates.append({"postalcode": cep_fallback, "country": "Brasil"})
+
+    if logradouro and cidade and uf:
+        candidates.append(f"{logradouro}, {cidade}, {uf}, Brasil")
+
     if cidade_uf:
         candidates.append(f"{endereco_consulta}, {cidade_uf}")
 
@@ -586,7 +622,7 @@ def reverse_geocode():
         response.headers['Access-Control-Allow-Origin'] = '*'
         return response
 
-    geolocator = Nominatim(user_agent="geoapiSparqs")
+    geolocator = make_geolocator()
     try:
         location = geolocator.reverse(
             (lat, lng),
@@ -656,7 +692,7 @@ def construir_json_com_lat_lng(
     is_route_optimized=True,
     item=None,
 ):
-    geolocator = Nominatim(user_agent="geoapiSparqs")
+    geolocator = make_geolocator()
     lat_origem, lng_origem = resolve_coordinates(endereco_origem, geolocator, 'o endereco de origem')
     lat_destino, lng_destino = resolve_coordinates(endereco_destino, geolocator, 'o endereco de destino')
 

@@ -14,6 +14,7 @@ No Render, configure no servico `vapt-vupt-api`:
 Opcional:
 
 - `LALAMOVE_BASE_URL` (padrao: `https://rest.sandbox.lalamove.com`)
+- `GEOCODER_USER_AGENT` (padrao: `vapt-vupt-geocoder`)
 
 Para desenvolvimento local, voce pode criar `back/.env.local` (nao versionado) a partir de `back/.env.local.example`.
 
