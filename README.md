@@ -36,7 +36,7 @@ Frontend (`front/vapt-vupt-front`):
 
 - Build: `npm ci && npm run build`
 - Publish: `build`
-- `REACT_APP_API_BASE_URL` aponta automaticamente para a URL do backend
+- `REACT_APP_API_BASE_URL` aponta automaticamente para o host do backend (o front completa com `https://`)
 
 ### 4. Desenvolvimento local
 

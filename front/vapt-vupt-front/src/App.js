@@ -18,7 +18,11 @@ import {
   OutlinedInput,
 } from '@mui/material';
 
-const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+const RAW_API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000').trim();
+const NORMALIZED_API_BASE_URL = /^https?:\/\//i.test(RAW_API_BASE_URL)
+  ? RAW_API_BASE_URL
+  : `https://${RAW_API_BASE_URL}`;
+const API_BASE_URL = NORMALIZED_API_BASE_URL.replace(/\/$/, '');
 const EXPIRY_DEBUG_OFFSET_MS = 60 * 1000;
 
 const PROVIDER_OPTIONS = [

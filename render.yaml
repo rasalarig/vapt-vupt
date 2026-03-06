@@ -33,4 +33,4 @@ services:
         fromService:
           type: web
           name: vapt-vupt-api
-          property: url
+          property: host
