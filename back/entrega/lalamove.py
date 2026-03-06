@@ -4,16 +4,19 @@ import time
 import hashlib
 import hmac
 import uuid
+import os
 from geopy.geocoders import Nominatim
 
 def faz_cotacao_lalamove(endereco_origem, endereco_destino):
    
     body = construir_json_com_lat_lng(endereco_origem, endereco_destino)
 
-    # Substitua os valores abaixo pelos seus próprios dados
-    api_url = "https://rest.sandbox.lalamove.com/v3/quotations"
-    api_key = 'pk_test_fa2676a55400efc369014e6fefcd4799'  # put your lalamove API key here
-    api_secret = 'sk_test_ZqzMBAveJ+S9EkM1tNJXn1wmhp/tY7igAjUfxAqMz1+y6tod2tRb7yBbrOL+D2nj'  
+    api_url = f"{os.getenv('LALAMOVE_BASE_URL', 'https://rest.sandbox.lalamove.com').rstrip('/')}/v3/quotations"
+    api_key = os.getenv('LALAMOVE_API_KEY')
+    api_secret = os.getenv('LALAMOVE_API_SECRET')
+
+    if not api_key or not api_secret:
+        raise RuntimeError('Defina LALAMOVE_API_KEY e LALAMOVE_API_SECRET nas variaveis de ambiente.')
 
 
     # Timestamp em milissegundos
@@ -43,7 +46,7 @@ def faz_cotacao_lalamove(endereco_origem, endereco_destino):
     }
 
     # Fazer a chamada à API
-    response = requests.post(api_url, json=body, headers=headers)
+    response = requests.post(api_url, json=body, headers=headers, timeout=25)
     response_data = response.json()
 
     # Verificar a resposta

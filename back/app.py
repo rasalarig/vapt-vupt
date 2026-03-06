@@ -7,6 +7,7 @@ import hmac
 import uuid
 import re
 import math
+import os
 from datetime import datetime, timedelta, timezone
 from geopy.geocoders import Nominatim
 from flask_cors import CORS
@@ -262,6 +263,11 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
     return response
 
+
+@app.route('/health', methods=['GET'])
+def healthcheck():
+    return jsonify({"status": "ok"}), 200
+
 # Endpoint de Cotação
 @app.route('/cotacao', methods=['POST', 'OPTIONS'])
 def faz_cotacao():
@@ -320,9 +326,20 @@ def faz_cotacao():
         flask_response.headers['Access-Control-Allow-Origin'] = '*'
         return flask_response
 
-    api_url = "https://rest.sandbox.lalamove.com/v3/quotations"
-    api_key = 'pk_test_fa2676a55400efc369014e6fefcd4799'
-    api_secret = 'sk_test_ZqzMBAveJ+S9EkM1tNJXn1wmhp/tY7igAjUfxAqMz1+y6tod2tRb7yBbrOL+D2nj'
+    lalamove_base_url = os.getenv('LALAMOVE_BASE_URL', 'https://rest.sandbox.lalamove.com').rstrip('/')
+    api_url = f"{lalamove_base_url}/v3/quotations"
+    api_key = os.getenv('LALAMOVE_API_KEY')
+    api_secret = os.getenv('LALAMOVE_API_SECRET')
+
+    if not api_key or not api_secret:
+        response = make_response(jsonify({
+            "error": (
+                "Credenciais da Lalamove nao configuradas. "
+                "Defina LALAMOVE_API_KEY e LALAMOVE_API_SECRET no ambiente."
+            )
+        }), 500)
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
 
     timestamp = int(time.time() * 1000)
     body_json = json.dumps(body)
@@ -340,7 +357,7 @@ def faz_cotacao():
         "X-Timestamp": str(timestamp)
     }
 
-    response = requests.post(api_url, json=body, headers=headers)
+    response = requests.post(api_url, json=body, headers=headers, timeout=25)
     response_data = response.json()
 
     if response.status_code == 200 or response.status_code == 201:
@@ -707,4 +724,4 @@ def docs():
     return openapi_spec, 200, {'Content-Type': 'text/yaml'}
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', '5000')))

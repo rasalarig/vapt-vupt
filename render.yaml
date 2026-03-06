@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: vapt-vupt-api
+    runtime: python
+    rootDir: back
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: LALAMOVE_BASE_URL
+        value: https://rest.sandbox.lalamove.com
+      - key: LALAMOVE_API_KEY
+        sync: false
+      - key: LALAMOVE_API_SECRET
+        sync: false
+
+  - type: static
+    name: vapt-vupt-front
+    rootDir: front/vapt-vupt-front
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: REACT_APP_API_BASE_URL
+        fromService:
+          type: web
+          name: vapt-vupt-api
+          property: url

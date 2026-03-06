@@ -18,7 +18,7 @@ import {
   OutlinedInput,
 } from '@mui/material';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
 const EXPIRY_DEBUG_OFFSET_MS = 60 * 1000;
 
 const PROVIDER_OPTIONS = [
@@ -233,40 +233,6 @@ function App() {
         setEnderecoDestino(buildAddressFromBase(destinoBase, value));
       }
     }
-  };
-
-  const requestLocation = () => {
-    if (!navigator.geolocation) {
-      setErrorMessage('Geolocalizacao nao suportada neste navegador.');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          setErrorMessage('');
-          const payload = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-
-          const response = await axios.post(`${API_BASE_URL}/reverse-geocode`, payload);
-          applyLookupResult('origem', response.data, numeroOrigem);
-
-          const cidade = response.data?.cidade;
-          const uf = response.data?.uf;
-          if (cidade && uf) {
-            setCidadeUf(`${cidade}, ${uf}`);
-          }
-        } catch (error) {
-          const backendError = error.response?.data?.error;
-          setErrorMessage(backendError || `Erro ao obter endereco da localizacao: ${error.message}`);
-        }
-      },
-      () => {
-        setErrorMessage('Nao foi possivel obter sua localizacao atual.');
-      }
-    );
   };
 
   const handleQuote = async () => {
@@ -497,10 +463,6 @@ function App() {
               </Typography>
 
               <Box display="flex" flexDirection="column" gap={2}>
-                <Button variant="contained" onClick={requestLocation}>
-                  Usar minha localizacao para preencher origem
-                </Button>
-
                 <Grid container spacing={2}>
                   <Grid item xs={8}>
                     <TextField
@@ -529,7 +491,7 @@ function App() {
                   label="Numero origem"
                   value={numeroOrigem}
                   onChange={(e) => handleNumeroChange('origem', e.target.value)}
-                  helperText="Altere o numero e o endereco completo atualiza automaticamente quando origem vier de CEP/localizacao."
+                  helperText="Altere o numero e o endereco completo atualiza automaticamente quando origem vier de CEP."
                 />
 
                 <TextField
