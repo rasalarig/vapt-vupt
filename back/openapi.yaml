@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: API de Cotação
+  description: API para realizar cotações com a Lalamove
+  version: 1.0.0
+paths:
+  /cotacao:
+    post:
+      summary: Realiza uma cotação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endereco_origem:
+                  type: string
+                endereco_destino:
+                  type: string
+              required:
+                - endereco_origem
+                - endereco_destino
+      responses:
+        '200':
+          description: Cotação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Erro de entrada do usuário
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Erro no servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
