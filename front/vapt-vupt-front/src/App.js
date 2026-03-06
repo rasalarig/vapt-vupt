@@ -19,9 +19,13 @@ import {
 } from '@mui/material';
 
 const RAW_API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000').trim();
-const NORMALIZED_API_BASE_URL = /^https?:\/\//i.test(RAW_API_BASE_URL)
-  ? RAW_API_BASE_URL
-  : `https://${RAW_API_BASE_URL}`;
+const API_HOST_OR_URL = RAW_API_BASE_URL.includes('://') ? RAW_API_BASE_URL : RAW_API_BASE_URL;
+const API_HOST_WITH_DOMAIN = (!API_HOST_OR_URL.includes('://') && !API_HOST_OR_URL.includes('.'))
+  ? `${API_HOST_OR_URL}.onrender.com`
+  : API_HOST_OR_URL;
+const NORMALIZED_API_BASE_URL = /^https?:\/\//i.test(API_HOST_WITH_DOMAIN)
+  ? API_HOST_WITH_DOMAIN
+  : `https://${API_HOST_WITH_DOMAIN}`;
 const API_BASE_URL = NORMALIZED_API_BASE_URL.replace(/\/$/, '');
 const EXPIRY_DEBUG_OFFSET_MS = 60 * 1000;
 

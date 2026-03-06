@@ -15,6 +15,8 @@ Opcional:
 
 - `LALAMOVE_BASE_URL` (padrao: `https://rest.sandbox.lalamove.com`)
 
+Para desenvolvimento local, voce pode criar `back/.env.local` (nao versionado) a partir de `back/.env.local.example`.
+
 ### 2. Criar servicos via Blueprint
 
 1. Suba este repositorio no GitHub.
