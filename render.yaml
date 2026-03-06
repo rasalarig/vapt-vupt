@@ -21,7 +21,6 @@ services:
     name: vapt-vupt-front
     env: static
     rootDir: front/vapt-vupt-front
-    plan: free
     buildCommand: npm ci && npm run build
     staticPublishPath: build
     routes:
