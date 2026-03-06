@@ -1,7 +1,7 @@
 services:
   - type: web
     name: vapt-vupt-api
-    runtime: python
+    env: python
     rootDir: back
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -17,8 +17,9 @@ services:
       - key: LALAMOVE_API_SECRET
         sync: false
 
-  - type: static
+  - type: web
     name: vapt-vupt-front
+    env: static
     rootDir: front/vapt-vupt-front
     plan: free
     buildCommand: npm ci && npm run build
